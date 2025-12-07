@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "222743241092",
+    "project_id": "gestorop-c53cd",
+    "storage_bucket": "gestorop-c53cd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222743241092:android:af115a5a759d6ddecbfdd1",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHx1yzJea1BovvgAIAPc6HLrTDNl4tu_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
