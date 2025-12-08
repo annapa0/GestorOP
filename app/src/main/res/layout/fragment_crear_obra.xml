@@ -15,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="20dp"
             android:gravity="center_horizontal"
             android:text="Nueva Obra"
             android:textColor="#333333"
@@ -38,21 +38,46 @@
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Ubicación / Dirección"
-            app:startIconDrawable="@android:drawable/ic_menu_mapmode">
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etUbicacionObra"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="textPostalAddress"
-                android:maxLines="2" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:hint="Ubicación (Escribe o marca en mapa)"
+                app:startIconDrawable="@android:drawable/ic_menu_mapmode">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUbicacionObra"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPostalAddress"
+                    android:maxLines="2" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageButton
+                android:id="@+id/btnBuscarEnMapa"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#00695C"
+                android:scaleType="centerInside"
+                android:contentDescription="Buscar dirección" />
+        </LinearLayout>
+
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_marginBottom="24dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -97,18 +122,9 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="* El estatus inicial será 'Iniciando'"
-            android:textColor="#757575"
-            android:textSize="12sp"
-            android:gravity="end"/>
-
         <Space
             android:layout_width="match_parent"
-            android:layout_height="32dp" />
+            android:layout_height="30dp" />
 
         <Button
             android:id="@+id/btnGuardarObra"
