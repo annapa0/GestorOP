@@ -23,6 +23,7 @@ public class OpcionesFragment extends Fragment {
         Button btnPerfil = view.findViewById(R.id.btnPerfil);
         Button btnCrearUsuario = view.findViewById(R.id.btnCrearUsuario);
         Button btnCerrar = view.findViewById(R.id.btnCerrarSesion);
+        Button btnCreaObra = view.findViewById(R.id.btnCreaObra);
 
         btnPerfil.setOnClickListener(v ->
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
@@ -32,6 +33,11 @@ public class OpcionesFragment extends Fragment {
         btnCrearUsuario.setOnClickListener(v ->
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
                         .navigate(R.id.crearUsuarioFragment)
+        );
+
+        btnCreaObra.setOnClickListener(v ->
+            Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                    .navigate(R.id.crearObraFragment)
         );
 
         btnCerrar.setOnClickListener(v -> {

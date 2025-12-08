@@ -17,4 +17,11 @@
         android:label="Crear Usuario"
         tools:layout="@layout/fragment_crear_usuario" />
 
+    <fragment
+        android:id="@+id/crearObraFragment"
+        android:name="com.example.gestorop.ui.CrearObraFragment"
+        android:label="Crear Obra"
+        tools:layout="@layout/fragment_crear_obra" />
+
+
 </navigation>

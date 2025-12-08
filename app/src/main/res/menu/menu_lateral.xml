@@ -1,11 +1,4 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item
-        android:id="@+id/nav_crear_usuario"
-        android:title="Crear Usuario" />
-
-    <item
-        android:id="@+id/nav_cerrar"
-        android:title="Cerrar Sesión" />
 
 </menu>

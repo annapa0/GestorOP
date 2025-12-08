@@ -20,6 +20,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Crear usuario" />
+        <Button
+            android:id="@+id/btnCreaObra"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Crear obra" />
 
         <Button
             android:id="@+id/btnCerrarSesion"
