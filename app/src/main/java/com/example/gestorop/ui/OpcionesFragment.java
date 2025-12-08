@@ -2,7 +2,9 @@ package com.example.gestorop.ui;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,18 +24,19 @@ public class OpcionesFragment extends Fragment {
         Button btnCrearUsuario = view.findViewById(R.id.btnCrearUsuario);
         Button btnCerrar = view.findViewById(R.id.btnCerrarSesion);
 
-        btnPerfil.setOnClickListener(v -> {
-            // Acción del botón Perfil
-        });
+        btnPerfil.setOnClickListener(v ->
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.homeFragment)
+        );
 
-        btnCrearUsuario.setOnClickListener(v -> {
-            // Acción del botón Configuración
-        });
+        btnCrearUsuario.setOnClickListener(v ->
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.crearUsuarioFragment)
+        );
 
         btnCerrar.setOnClickListener(v -> {
-            // Acción de cerrar sesión
+            // Aquí agregas tu lógica para cerrar sesión
         });
-
 
         return view;
     }

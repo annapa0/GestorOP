@@ -3,21 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/nav_dashboard">
+    app:startDestination="@id/homeFragment">
 
     <fragment
-        android:id="@+id/nav_dashboard"
-        android:name="com.example.myapplication.ui.DashboardFragment"
-        android:label="Obras"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/homeFragment"
+        android:name="com.example.gestorop.ui.HomeFragment"
+        android:label="Inicio"
+        tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/nav_mapa"
-        android:name="com.example.myapplication.ui.MapaFragment"
-        android:label="Mapa Global" />
+        android:id="@+id/crearUsuarioFragment"
+        android:name="com.example.gestorop.ui.CrearUsuarioFragment"
+        android:label="Crear Usuario"
+        tools:layout="@layout/fragment_crear_usuario" />
 
-    <fragment
-        android:id="@+id/nav_perfil"
-        android:name="com.example.myapplication.ui.PerfilFragment"
-        android:label="Mi Perfil" />
 </navigation>
