@@ -13,6 +13,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.example.gestorop.ui.HomeFragment;
 import com.example.gestorop.ui.OpcionesFragment;
 import com.example.myapplication.R;
+import com.google.android.material.appbar.MaterialToolbar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,6 +25,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         drawerLayout = findViewById(R.id.drawerLayout);
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, GravityCompat.END);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+
+        toolbar.setNavigationOnClickListener(v -> {
+            abrirMenu();
+        });
 
         if (savedInstanceState == null) {
             getSupportFragmentManager()
@@ -32,15 +40,18 @@ public class MainActivity extends AppCompatActivity {
                     .replace(R.id.sideContainer, new OpcionesFragment())
                     .commit();
         }
+
     }
+
+
 
     // Abrir menú
     public void abrirMenu() {
-        drawerLayout.openDrawer(GravityCompat.END);
+        drawerLayout.openDrawer(GravityCompat.START);
     }
 
     // Cerrar menú
     public void cerrarMenu() {
-        drawerLayout.closeDrawer(GravityCompat.END);
+        drawerLayout.closeDrawer(GravityCompat.START);
     }
 }

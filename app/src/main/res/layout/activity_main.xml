@@ -34,7 +34,7 @@
         android:id="@+id/sideContainer"
         android:layout_width="280dp"
         android:layout_height="match_parent"
-        android:layout_gravity="end"
+        android:layout_gravity="start"
         android:background="@android:color/white"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>
