@@ -1,57 +1,65 @@
 package com.example.gestorop;
 
 import android.os.Bundle;
-
-import androidx.activity.EdgeToEdge;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.GravityCompat;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
-import com.example.gestorop.ui.HomeFragment;
 import com.example.gestorop.ui.OpcionesFragment;
 import com.example.myapplication.R;
 import com.google.android.material.appbar.MaterialToolbar;
 
 public class MainActivity extends AppCompatActivity {
 
-    private DrawerLayout drawerLayout;
+    private AppBarConfiguration appBarConfiguration;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        drawerLayout = findViewById(R.id.drawerLayout);
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED, GravityCompat.END);
-
+        DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
 
-        toolbar.setNavigationOnClickListener(v -> {
-            abrirMenu();
-        });
+        // Cargar el menú lateral solo una vez
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.sideContainer, new OpcionesFragment())
+                .commit();
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.mainContainer, new HomeFragment())
-                    .replace(R.id.sideContainer, new OpcionesFragment())
-                    .commit();
-        }
+        // Configurar NavHost
+        NavHostFragment navHostFragment =
+                (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
 
+        NavController navController = navHostFragment.getNavController();
+
+        // Destinos principales (raíz)
+        appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.homeFragment,
+                R.id.crearUsuarioFragment
+        ).setOpenableLayout(drawerLayout).build();
+
+        // Toolbar y navegación
+        setSupportActionBar(toolbar);
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+
+        // Abrir menú lateral
+        toolbar.setNavigationOnClickListener(v ->
+                drawerLayout.openDrawer(android.view.Gravity.START)
+        );
     }
 
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController =
+                ((NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment))
+                        .getNavController();
 
-
-    // Abrir menú
-    public void abrirMenu() {
-        drawerLayout.openDrawer(GravityCompat.START);
-    }
-
-    // Cerrar menú
-    public void cerrarMenu() {
-        drawerLayout.closeDrawer(GravityCompat.START);
+        return NavigationUI.navigateUp(navController, appBarConfiguration)
+                || super.onSupportNavigateUp();
     }
 }
