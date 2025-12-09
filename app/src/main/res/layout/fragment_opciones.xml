@@ -30,6 +30,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Mis Obras" />
+        <Button
+            android:id="@+id/btnobrasAsignadasFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Obras Asignadas" />
 
         <Button
             android:id="@+id/btnCerrarSesion"

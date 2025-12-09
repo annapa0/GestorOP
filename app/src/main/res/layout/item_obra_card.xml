@@ -60,4 +60,14 @@
             android:textSize="12sp"
             android:textColor="#0277BD"
             android:visibility="gone" /> </LinearLayout>
+        <TextView
+            android:id="@+id/txtResidente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Residente Asignado: ..."
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:textColor="#EF6C00"
+            android:visibility="gone" />
 </androidx.cardview.widget.CardView>

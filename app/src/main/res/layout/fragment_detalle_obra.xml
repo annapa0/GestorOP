@@ -22,18 +22,96 @@
             android:layout_marginBottom="8dp"/>
 
         <TextView
+            android:id="@+id/tvSupervisorInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Supervisor: Cargando..."
+            android:textColor="#0277BD"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvResidenteInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Residente: Cargando..."
+            android:textColor="#EF6C00"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvFechaInicio"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Inicio: --/--/----"
+                android:textSize="14sp"
+                android:textColor="#444"/>
+
+            <TextView
+                android:id="@+id/tvFechaFin"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Fin: --/--/----"
+                android:gravity="end"
+                android:textSize="14sp"
+                android:textColor="#444"/>
+        </LinearLayout>
+
+        <TextView
             android:id="@+id/tvUbicacionDetalle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Ubicación..."
             android:textSize="16sp"
             android:textColor="#666"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="24dp">
+
+            <com.google.android.gms.maps.MapView
+                android:id="@+id/mapViewDetalle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/btnRegistrarAvance"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="📷 Registrar Avance Diario"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/> <LinearLayout
+        android:id="@+id/layoutAsignacion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDD"
+            android:layout_marginBottom="16dp"/>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Asignar Residente de Obra"
+            android:text="Cambiar Asignación"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
 
@@ -41,7 +119,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="16dp"
             android:hint="Seleccionar Residente">
 
             <AutoCompleteTextView
@@ -57,9 +135,10 @@
             android:id="@+id/btnAsignarResidente"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="GUARDAR ASIGNACIÓN"
+            android:text="GUARDAR CAMBIOS"
             android:backgroundTint="#00695C"
             android:textStyle="bold"/>
+    </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

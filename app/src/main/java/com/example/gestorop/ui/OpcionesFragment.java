@@ -29,6 +29,7 @@ public class OpcionesFragment extends Fragment {
         Button btnCreaObra = view.findViewById(R.id.btnCreaObra);
         Button btnCerrar = view.findViewById(R.id.btnCerrarSesion);
         Button btnMisObras = view.findViewById(R.id.btnMisObras);
+        Button btnVerAsignadas = view.findViewById(R.id.btnobrasAsignadasFragment);
         // 2. OBTENER EL ROL DE LA SESIÓN
         String rolActual = Sesion.obtenerRol(requireContext());
 
@@ -46,6 +47,13 @@ public class OpcionesFragment extends Fragment {
             // Residente: Ocultamos Crear Usuario y Crear Obra (Igual que supervisor en este caso)
             btnCrearUsuario.setVisibility(View.GONE);
             btnCreaObra.setVisibility(View.GONE);
+        }
+        String rol = Sesion.obtenerRol(requireContext());
+
+        if (rol.equalsIgnoreCase("Supervisor")) {
+            btnVerAsignadas.setVisibility(View.VISIBLE);
+        } else {
+            btnVerAsignadas.setVisibility(View.GONE);
         }
 
         // 4. Configurar Listeners (Navegación)
@@ -68,6 +76,10 @@ public class OpcionesFragment extends Fragment {
         btnMisObras.setOnClickListener(v ->
                 Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
                         .navigate(R.id.misObrasFragment)
+        );
+        btnVerAsignadas.setOnClickListener(v ->
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.obrasAsignadasFragment)
         );
 
         // 5. Lógica de Cerrar Sesión

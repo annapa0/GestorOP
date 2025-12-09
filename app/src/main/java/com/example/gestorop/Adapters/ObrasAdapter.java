@@ -15,14 +15,12 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
 
     private List<Obra> listaObras;
     private FirebaseFirestore db;
-    private OnItemClickListener listener; // <--- 1. Interfaz para el clic
+    private OnItemClickListener listener;
 
-    // 2. Definimos la interfaz
     public interface OnItemClickListener {
         void onItemClick(Obra obra);
     }
 
-    // 3. Actualizamos el constructor para recibir el listener
     public ObrasAdapter(List<Obra> listaObras, OnItemClickListener listener) {
         this.listaObras = listaObras;
         this.listener = listener;
@@ -44,20 +42,33 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
         holder.txtUbicacion.setText("📍 " + obra.getUbicacion());
         holder.txtEstatus.setText(obra.getEstatus());
 
-        // Lógica de Supervisor (copiada del paso anterior)
-        String supervisorId = obra.getSupervisorId();
-        if (supervisorId != null && !supervisorId.isEmpty()) {
+        // 1. MOSTRAR SUPERVISOR (Si existe)
+        if (obra.getSupervisorId() != null && !obra.getSupervisorId().isEmpty()) {
             holder.txtSupervisor.setVisibility(View.VISIBLE);
-            holder.txtSupervisor.setText("Cargando supervisor...");
-            db.collection("users").document(supervisorId).get()
+            db.collection("users").document(obra.getSupervisorId()).get()
                     .addOnSuccessListener(doc -> {
-                        if (doc.exists()) holder.txtSupervisor.setText("Sup: " + doc.getString("email"));
+                        if(doc.exists()) holder.txtSupervisor.setText("Sup: " + doc.getString("email"));
                     });
         } else {
             holder.txtSupervisor.setVisibility(View.GONE);
         }
 
-        // 4. DETECTAR EL CLIC EN LA TARJETA
+        // 2. MOSTRAR RESIDENTE (NUEVO)
+        if (obra.getResidenteId() != null && !obra.getResidenteId().isEmpty()) {
+            holder.txtResidente.setVisibility(View.VISIBLE);
+            holder.txtResidente.setText("Cargando residente...");
+
+            db.collection("users").document(obra.getResidenteId()).get()
+                    .addOnSuccessListener(doc -> {
+                        if(doc.exists()) {
+                            // Aquí mostramos claramente a quién se asignó
+                            holder.txtResidente.setText("➡ Asignado a: " + doc.getString("email"));
+                        }
+                    });
+        } else {
+            holder.txtResidente.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(obra);
         });
@@ -67,13 +78,15 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
     public int getItemCount() { return listaObras.size(); }
 
     static class ObraViewHolder extends RecyclerView.ViewHolder {
-        TextView txtNombre, txtUbicacion, txtEstatus, txtSupervisor;
+        TextView txtNombre, txtUbicacion, txtEstatus, txtSupervisor, txtResidente; // Agregado txtResidente
+
         public ObraViewHolder(@NonNull View itemView) {
             super(itemView);
             txtNombre = itemView.findViewById(R.id.txtNombreObra);
             txtUbicacion = itemView.findViewById(R.id.txtUbicacion);
             txtEstatus = itemView.findViewById(R.id.txtEstatus);
             txtSupervisor = itemView.findViewById(R.id.txtSupervisor);
+            txtResidente = itemView.findViewById(R.id.txtResidente); // Vinculado
         }
     }
 }

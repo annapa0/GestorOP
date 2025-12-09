@@ -32,6 +32,21 @@
         android:name="com.example.gestorop.ui.DetalleObraFragment"
         android:label="Detalle de Obra"
         tools:layout="@layout/fragment_detalle_obra" />
+    <fragment
+        android:id="@+id/obrasAsignadasFragment"
+        android:name="com.example.gestorop.ui.ObrasAsignadasFragment"
+        android:label="Obras Ya Asignadas"
+        tools:layout="@layout/fragment_obras_asignadas" />
+    <fragment
+        android:id="@+id/action_detalleObra_to_capturaAvance"
+        android:name="com.example.gestorop.ui.CapturaAvanceFragment"
+        android:label="foto"
+        tools:layout="@layout/fragment_captura_avance" />
+    <fragment
+        android:id="@+id/capturaAvanceFragment"
+        android:name="com.example.gestorop.ui.CapturaAvanceFragment"
+        android:label="Registrar Avance"
+        tools:layout="@layout/fragment_captura_avance" />
 
 
 </navigation>
