@@ -4,7 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color; // Importante para el círculo
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,10 +14,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter; // Importante para el Spinner
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Spinner; // Importante
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -53,11 +55,10 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-// Implementamos OnMapReadyCallback
 public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallback {
 
-    // --- CONFIGURACIÓN DE GEOCERCA ---
-    private static final float RADIO_PERMITIDO_METROS = 200.0f; // 200 metros a la redonda
+    // --- CONFIGURACIÓN ---
+    private static final float RADIO_PERMITIDO_METROS = 200.0f;
     private static final int REQUEST_IMAGE = 1;
     private static final int REQUEST_VIDEO = 2;
     private static final int PERM_CODE = 100;
@@ -67,27 +68,28 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
     private VideoView videoPreview;
     private TextView tvEstadoUbicacion, tvCoords, tvTitulo;
     private EditText etDesc;
+    private Spinner spinnerEtapa; // Selector de Etapa
     private Button btnFoto, btnVideo, btnGps, btnGuardar;
     private ProgressBar progressBar;
-    private MapView mapView; // Mapa nuevo
+    private MapView mapView;
     private GoogleMap gMap;
 
-    // Archivos y Lógica
+    // Archivos
     private Uri uriFotoFinal = null;
     private Uri uriVideoFinal = null;
     private String currentPath;
-    private String tipoEvidencia = "";
 
     // Ubicación
     private FusedLocationProviderClient fusedClient;
     private Location ubicacionUsuario;
-    private Location ubicacionObra; // Ubicación fija de la obra
-    private boolean estaEnZona = false; // Bandera de validación
+    private Location ubicacionObra;
+    private boolean estaEnZona = false;
 
     // Datos Obra
     private String obraId, obraNombre;
     private double obraLat, obraLng;
 
+    // Firebase
     private FirebaseFirestore db;
     private StorageReference storage;
 
@@ -99,20 +101,18 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         if (getArguments() != null) {
             obraId = getArguments().getString("OBRA_ID");
             obraNombre = getArguments().getString("OBRA_NOMBRE");
-
-            // Recibir coordenadas de la obra (Strings convertidos a Double)
             try {
                 String latS = getArguments().getString("OBRA_LAT");
                 String lngS = getArguments().getString("OBRA_LNG");
-                obraLat = Double.parseDouble(latS);
-                obraLng = Double.parseDouble(lngS);
-
-                // Crear objeto Location para cálculos
-                ubicacionObra = new Location("ProviderObra");
-                ubicacionObra.setLatitude(obraLat);
-                ubicacionObra.setLongitude(obraLng);
+                if (latS != null && lngS != null) {
+                    obraLat = Double.parseDouble(latS);
+                    obraLng = Double.parseDouble(lngS);
+                    ubicacionObra = new Location("ProviderObra");
+                    ubicacionObra.setLatitude(obraLat);
+                    ubicacionObra.setLongitude(obraLng);
+                }
             } catch (Exception e) {
-                obraLat = 0.0; obraLng = 0.0; // Manejo de error
+                obraLat = 0.0; obraLng = 0.0;
             }
         }
     }
@@ -125,7 +125,7 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance().getReference();
 
-        // Vincular UI
+        // 1. Vincular UI
         tvTitulo = view.findViewById(R.id.tvTituloAvance);
         imgPreview = view.findViewById(R.id.imgPreview);
         videoPreview = view.findViewById(R.id.videoPreview);
@@ -134,6 +134,7 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         tvEstadoUbicacion = view.findViewById(R.id.tvEstadoUbicacion);
         tvCoords = view.findViewById(R.id.tvCoordenadas);
         etDesc = view.findViewById(R.id.etDescripcionAvance);
+        spinnerEtapa = view.findViewById(R.id.spinnerEtapa); // Vinculamos el Spinner
 
         btnFoto = view.findViewById(R.id.btnTomarFoto);
         btnVideo = view.findViewById(R.id.btnGrabarVideo);
@@ -141,14 +142,16 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         btnGuardar = view.findViewById(R.id.btnGuardarAvance);
         progressBar = view.findViewById(R.id.progressBarAvance);
 
-        // Mapa
         mapView = view.findViewById(R.id.mapViewValidacion);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
         if(tvTitulo != null) tvTitulo.setText("Avance: " + obraNombre);
 
-        // Listeners
+        // 2. Configurar Spinner de Etapas
+        configurarSpinner();
+
+        // 3. Listeners
         btnFoto.setOnClickListener(v -> tomarFoto());
         btnVideo.setOnClickListener(v -> grabarVideo());
         btnGps.setOnClickListener(v -> obtenerUbicacionEnTiempoReal());
@@ -159,42 +162,43 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         return view;
     }
 
+    private void configuringSpinner() {
+        String[] etapas = {
+                "Preliminares", "Cimentación", "Estructura", "Albañilería",
+                "Instalaciones", "Acabados", "Urbanización", "Limpieza Final", "Otro"
+        };
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, etapas);
+        spinnerEtapa.setAdapter(adapter);
+    }
+
+    // Método auxiliar por si se te pasó copiar el de arriba
+    private void configurarSpinner() {
+        configuringSpinner();
+    }
+
     // ==========================================
     // MAPA Y GEOCERCA
     // ==========================================
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         gMap = googleMap;
-
-        // 1. Dibujar la OBRA y el CÍRCULO PERMITIDO
         if (obraLat != 0.0 && obraLng != 0.0) {
             LatLng posObra = new LatLng(obraLat, obraLng);
-
-            // Marcador de la obra
-            gMap.addMarker(new MarkerOptions().position(posObra).title("Ubicación de la Obra"));
-
-            // Círculo de área permitida
+            gMap.addMarker(new MarkerOptions().position(posObra).title("Obra"));
             gMap.addCircle(new CircleOptions()
                     .center(posObra)
-                    .radius(RADIO_PERMITIDO_METROS) // ej. 200 metros
+                    .radius(RADIO_PERMITIDO_METROS)
                     .strokeWidth(2f)
                     .strokeColor(Color.BLUE)
-                    .fillColor(Color.parseColor("#220000FF"))); // Azul transparente
-
+                    .fillColor(Color.parseColor("#220000FF")));
             gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(posObra, 15f));
         }
-
-        // Intentar obtener ubicación al cargar el mapa
         obtenerUbicacionEnTiempoReal();
     }
 
     private void obtenerUbicacionEnTiempoReal() {
         if (!checkPermissions()) return;
-
-        try {
-            gMap.setMyLocationEnabled(true); // Mostrar puntito azul
-        } catch (SecurityException e) {}
-
+        try { gMap.setMyLocationEnabled(true); } catch (SecurityException e) {}
         Toast.makeText(getContext(), "Verificando zona...", Toast.LENGTH_SHORT).show();
 
         fusedClient.getLastLocation().addOnSuccessListener(location -> {
@@ -210,38 +214,26 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
 
     private void validarDistancia() {
         if (ubicacionObra == null || ubicacionUsuario == null) return;
+        float distancia = ubicacionUsuario.distanceTo(ubicacionObra);
+        tvCoords.setText(String.format("Distancia: %.0fm (Máx %.0fm)", distancia, RADIO_PERMITIDO_METROS));
 
-        // Calcular distancia en metros
-        float distanciaEnMetros = ubicacionUsuario.distanceTo(ubicacionObra);
-
-        tvCoords.setText(String.format("Distancia: %.2f metros (Máx %.0fm)", distanciaEnMetros, RADIO_PERMITIDO_METROS));
-
-        if (distanciaEnMetros <= RADIO_PERMITIDO_METROS) {
-            // DENTRO DE LA ZONA
+        if (distancia <= RADIO_PERMITIDO_METROS) {
             estaEnZona = true;
-            tvEstadoUbicacion.setText("✅ UBICACIÓN VÁLIDA (DENTRO DE LA OBRA)");
-            tvEstadoUbicacion.setTextColor(Color.parseColor("#4CAF50")); // Verde
-            btnGuardar.setBackgroundColor(Color.parseColor("#4CAF50")); // Botón Verde
+            tvEstadoUbicacion.setText("✅ DENTRO DE LA ZONA");
+            tvEstadoUbicacion.setTextColor(Color.parseColor("#4CAF50"));
+            btnGuardar.setBackgroundColor(Color.parseColor("#4CAF50"));
         } else {
-            // FUERA DE LA ZONA
             estaEnZona = false;
-            tvEstadoUbicacion.setText("❌ UBICACIÓN INVÁLIDA (FUERA DE RANGO)");
+            tvEstadoUbicacion.setText("❌ FUERA DE RANGO");
             tvEstadoUbicacion.setTextColor(Color.RED);
-            btnGuardar.setBackgroundColor(Color.parseColor("#CCCCCC")); // Botón Gris
-
-            // Centrar mapa para mostrar cuán lejos está
-            LatLng miPos = new LatLng(ubicacionUsuario.getLatitude(), ubicacionUsuario.getLongitude());
-            gMap.animateCamera(CameraUpdateFactory.newLatLng(miPos));
+            btnGuardar.setBackgroundColor(Color.parseColor("#CCCCCC"));
+            gMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(ubicacionUsuario.getLatitude(), ubicacionUsuario.getLongitude())));
         }
-
         validarBoton();
     }
 
     private void validarBoton() {
-        // Para habilitar el botón se requiere:
-        // 1. Estar en la zona (Geocerca)
-        // 2. Tener al menos una foto o video
-
+        // Regla: Estar en zona Y (tener foto O video)
         if (estaEnZona && (uriFotoFinal != null || uriVideoFinal != null)) {
             btnGuardar.setEnabled(true);
         } else {
@@ -250,15 +242,8 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
     }
 
     // ==========================================
-    // CÁMARA (FOTO Y VIDEO - Código previo simplificado)
+    // CÁMARA
     // ==========================================
-    // (Mantén los métodos dispatchTakePictureIntent, dispatchTakeVideoIntent,
-    // createMediaFile y onActivityResult iguales que en la respuesta anterior)
-
-    // ... AQUÍ VAN LOS MÉTODOS DE CÁMARA (Copia los de la respuesta anterior) ...
-    // Solo recuerda llamar a validarBoton() dentro de onActivityResult
-
-    // --- CÁMARA (FOTO) ---
     private void tomarFoto() {
         if (!checkPermissions()) return;
         try {
@@ -304,29 +289,27 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
                 imgPreview.setImageURI(uriFotoFinal);
             } else if (requestCode == REQUEST_VIDEO) {
                 uriVideoFinal = Uri.parse(currentPath);
-                tvTitulo.setText("Video grabado correctamente"); // Feedback visual simple
                 videoPreview.setVisibility(View.VISIBLE);
                 iconPlay.setVisibility(View.VISIBLE);
                 videoPreview.setVideoURI(uriVideoFinal);
                 videoPreview.seekTo(100);
             }
-            validarBoton(); // Re-validar si ya se puede guardar
+            validarBoton();
         }
     }
 
     // ==========================================
-    // SUBIDA (CHAIN - Código previo)
+    // SUBIDA
     // ==========================================
     private void iniciarSubida() {
         if (!estaEnZona) {
-            Toast.makeText(getContext(), "Debes estar en la obra para reportar.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Fuera de zona permitida", Toast.LENGTH_SHORT).show();
             return;
         }
-
         progressBar.setVisibility(View.VISIBLE);
         btnGuardar.setEnabled(false);
 
-        // Iniciar cadena: Foto -> Video -> Firestore
+        // Cadena de subida
         if (uriFotoFinal != null) subirFoto();
         else subirVideo(null);
     }
@@ -355,24 +338,31 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         String userId = Sesion.obtenerId(requireContext());
         String userEmail = Sesion.obtenerEmail(requireContext());
 
+        // Obtener etapa del spinner
+        String etapaSeleccionada = "";
+        if (spinnerEtapa.getSelectedItem() != null) {
+            etapaSeleccionada = spinnerEtapa.getSelectedItem().toString();
+        }
+
         Map<String, Object> data = new HashMap<>();
         data.put("obraId", obraId);
         data.put("usuarioId", userId);
         data.put("usuarioEmail", userEmail);
+        data.put("etapa", etapaSeleccionada); // Guardar Etapa
         data.put("descripcion", etDesc.getText().toString());
-        data.put("fecha", Timestamp.now());
-        // Guardamos la ubicación REAL donde se tomó la foto (verificada)
+        data.put("fechaRegistro", Timestamp.now());
         data.put("latitud", ubicacionUsuario.getLatitude());
         data.put("longitud", ubicacionUsuario.getLongitude());
         data.put("fotoUrl", urlFoto);
         data.put("videoUrl", urlVideo);
+        data.put("estado", "PENDIENTE");
 
         db.collection("avances").add(data)
                 .addOnSuccessListener(d -> {
-                    Toast.makeText(getContext(), "Avance Verificado y Guardado", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "¡Avance Guardado!", Toast.LENGTH_LONG).show();
                     Navigation.findNavController(requireView()).popBackStack();
                 })
-                .addOnFailureListener(e -> fallar("Error DB"));
+                .addOnFailureListener(e -> fallar("Error BD"));
     }
 
     private void fallar(String m) {
@@ -381,19 +371,17 @@ public class CapturaAvanceFragment extends Fragment implements OnMapReadyCallbac
         Toast.makeText(getContext(), m, Toast.LENGTH_SHORT).show();
     }
 
-    // Permisos
     private boolean checkPermissions() {
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-
             requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO}, PERM_CODE);
             return false;
         }
         return true;
     }
 
-    // Ciclo de vida del mapa
+    // Ciclo de vida mapa
     @Override public void onResume() { super.onResume(); mapView.onResume(); }
     @Override public void onPause() { super.onPause(); mapView.onPause(); }
     @Override public void onDestroy() { super.onDestroy(); mapView.onDestroy(); }

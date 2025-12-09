@@ -40,8 +40,9 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
     private AutoCompleteTextView spinnerResidente;
     private Button btnGuardarAsignacion;
 
-    // Vistas de Residente (Registro)
-    private Button btnRegistrarAvance;
+    // Botones de Acción
+    private Button btnRegistrarAvance; // Para el Residente
+    private Button btnVerBitacora;     // Para ver historial y aprobar/rechazar
 
     // Mapa
     private MapView mapView;
@@ -61,7 +62,6 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Recibir todos los datos del Bundle
         if (getArguments() != null) {
             obraId = getArguments().getString("OBRA_ID");
             nombre = getArguments().getString("OBRA_NOMBRE");
@@ -94,8 +94,10 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
         spinnerResidente = view.findViewById(R.id.spinnerResidente);
         btnGuardarAsignacion = view.findViewById(R.id.btnAsignarResidente);
 
-        // Botón de Residente
+        // Botones de Navegación
         btnRegistrarAvance = view.findViewById(R.id.btnRegistrarAvance);
+        // Asegúrate de haber agregado este botón en tu XML, si no, comenta estas líneas:
+        btnVerBitacora = view.findViewById(R.id.btnVerBitacora);
 
         // Configuración Mapa
         mapView = view.findViewById(R.id.mapViewDetalle);
@@ -115,21 +117,25 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
         // 3. Lógica de Roles
         String miRol = Sesion.obtenerRol(requireContext());
 
+        // Configuración común para todos: Ver Bitácora
+        if (btnVerBitacora != null) {
+            btnVerBitacora.setOnClickListener(v -> irABitacora());
+        }
+
         if (miRol.equalsIgnoreCase("Residente")) {
             // -- MODO RESIDENTE --
-            layoutAsignacion.setVisibility(View.GONE); // No puede asignar
-            btnRegistrarAvance.setVisibility(View.VISIBLE); // Puede reportar
-
+            layoutAsignacion.setVisibility(View.GONE);
+            btnRegistrarAvance.setVisibility(View.VISIBLE);
             btnRegistrarAvance.setOnClickListener(v -> irACapturaDeAvance());
 
         } else {
             // -- MODO SUPERVISOR / ADMIN --
-            layoutAsignacion.setVisibility(View.VISIBLE); // Puede asignar
-            btnRegistrarAvance.setVisibility(View.GONE); // No reporta desde aquí
+            layoutAsignacion.setVisibility(View.VISIBLE);
+            btnRegistrarAvance.setVisibility(View.GONE);
 
-            cargarListaResidentes(); // Llenar combo box
+            cargarListaResidentes();
 
-            // Forzar apertura del combo box al tocarlo
+            // Forzar apertura del combo box
             spinnerResidente.setOnClickListener(v -> {
                 if(spinnerResidente.getAdapter() != null) spinnerResidente.showDropDown();
             });
@@ -140,12 +146,12 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
         return view;
     }
 
-    // --- NAVEGACIÓN A CAPTURA ---
+    // --- NAVEGACIÓN ---
+
     private void irACapturaDeAvance() {
         Bundle bundle = new Bundle();
         bundle.putString("OBRA_ID", obraId);
         bundle.putString("OBRA_NOMBRE", nombre);
-        // ¡IMPORTANTE! Enviamos las coordenadas para la validación GPS
         bundle.putString("OBRA_LAT", latStr);
         bundle.putString("OBRA_LNG", lngStr);
 
@@ -153,11 +159,24 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
             Navigation.findNavController(requireView())
                     .navigate(R.id.capturaAvanceFragment, bundle);
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Error navegación: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Error nav captura: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    // --- MAPA (SOLO LECTURA) ---
+    private void irABitacora() {
+        Bundle bundle = new Bundle();
+        bundle.putString("OBRA_ID", obraId);
+
+        try {
+            // Asegúrate de agregar listaAvancesFragment en mobile_navigation.xml
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.listaAvancesFragment, bundle);
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Error nav bitácora: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // --- MAPA ---
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         gMap = googleMap;
@@ -170,7 +189,6 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
                 gMap.addMarker(new MarkerOptions().position(pos).title("Ubicación de Obra"));
                 gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos, 15f));
             }
-            // Habilitar gestos básicos
             gMap.getUiSettings().setScrollGesturesEnabled(true);
             gMap.getUiSettings().setZoomGesturesEnabled(true);
         } catch (Exception e) {
@@ -188,15 +206,15 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
         db.collection("users").document(uid).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 String email = doc.getString("email");
-                if (email == null) email = doc.getString("nombre"); // Fallback
+                if (email == null) email = doc.getString("nombre");
                 textView.setText(prefijo + (email != null ? email : "Desconocido"));
             }
         });
     }
 
     private void cargarListaResidentes() {
-        // Busca usuarios con rol 'Residente' (ajusta mayúsculas según tu DB)
-        db.collection("users").whereEqualTo("rol", "RESIDENTE").get()
+        // Corrección: Usamos "Residente" (Mayúscula) como en tu BD
+        db.collection("users").whereEqualTo("role", "Residente").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     listaCorreos.clear();
                     listaIds.clear();
@@ -211,7 +229,6 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
                         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, listaCorreos);
                         spinnerResidente.setAdapter(adapter);
                     }
-
                     spinnerResidente.setOnItemClickListener((p, v, pos, id) -> nuevoResidenteId = listaIds.get(pos));
                 });
     }
@@ -225,11 +242,9 @@ public class DetalleObraFragment extends Fragment implements OnMapReadyCallback 
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Asignado correctamente!", Toast.LENGTH_SHORT).show();
                     Navigation.findNavController(requireView()).popBackStack();
-                })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Error al guardar", Toast.LENGTH_SHORT).show());
+                });
     }
 
-    // --- CICLO DE VIDA MAPA ---
     @Override public void onResume() { super.onResume(); mapView.onResume(); }
     @Override public void onPause() { super.onPause(); mapView.onPause(); }
     @Override public void onDestroy() { super.onDestroy(); mapView.onDestroy(); }

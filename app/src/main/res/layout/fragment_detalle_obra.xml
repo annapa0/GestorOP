@@ -95,50 +95,61 @@
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:visibility="gone"
-            android:layout_marginBottom="16dp"/> <LinearLayout
-        android:id="@+id/layoutAsignacion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#DDD"
             android:layout_marginBottom="16dp"/>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Cambiar Asignación"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
-
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Seleccionar Residente">
-
-            <AutoCompleteTextView
-                android:id="@+id/spinnerResidente"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none"
-                android:focusable="false"
-                android:clickable="true" />
-        </com.google.android.material.textfield.TextInputLayout>
-
         <Button
-            android:id="@+id/btnAsignarResidente"
+            android:id="@+id/btnVerBitacora"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="GUARDAR CAMBIOS"
-            android:backgroundTint="#00695C"
-            android:textStyle="bold"/>
-    </LinearLayout>
+            android:text="📋 Ver Bitácora de Avances"
+            android:backgroundTint="#FF9800"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
 
-    </LinearLayout>
-</ScrollView>
+        <LinearLayout
+            android:id="@+id/layoutAsignacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#DDD"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cambiar Asignación"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Seleccionar Residente">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerResidente"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:clickable="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnAsignarResidente"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="GUARDAR CAMBIOS"
+                android:backgroundTint="#00695C"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+    </LinearLayout> </ScrollView>

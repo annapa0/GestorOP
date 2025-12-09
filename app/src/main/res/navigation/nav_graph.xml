@@ -38,15 +38,15 @@
         android:label="Obras Ya Asignadas"
         tools:layout="@layout/fragment_obras_asignadas" />
     <fragment
-        android:id="@+id/action_detalleObra_to_capturaAvance"
-        android:name="com.example.gestorop.ui.CapturaAvanceFragment"
-        android:label="foto"
-        tools:layout="@layout/fragment_captura_avance" />
-    <fragment
         android:id="@+id/capturaAvanceFragment"
         android:name="com.example.gestorop.ui.CapturaAvanceFragment"
         android:label="Registrar Avance"
         tools:layout="@layout/fragment_captura_avance" />
+    <fragment
+        android:id="@+id/listaAvancesFragment"
+        android:name="com.example.gestorop.ui.ListaAvancesFragment"
+        android:label="Avance"
+        tools:layout="@layout/fragment_lista_avances" />
 
 
 </navigation>
