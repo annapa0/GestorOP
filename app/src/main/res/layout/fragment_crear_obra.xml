@@ -77,7 +77,24 @@
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="250dp"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Asignar Supervisor"
+            app:startIconDrawable="@android:drawable/ic_menu_my_calendar">
+
+            <AutoCompleteTextView
+                android:id="@+id/spinnerSupervisor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:focusable="false"
+                android:clickable="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

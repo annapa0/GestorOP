@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
 
 import com.example.myapplication.R;
 
@@ -61,6 +63,19 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
+
+        // 1. Vinculamos el TextView
+        TextView txtRol = view.findViewById(R.id.Rol);
+
+        // 2. Obtenemos el rol desde la Sesión
+        // IMPORTANTE: Usamos 'requireContext()' en lugar de 'this'
+        String rolGuardado = com.example.gestorop.model.Sesion.obtenerRol(requireContext());
+        // Nota: Si pusiste la clase Sesion en la carpeta 'model', ajusta el import arriba.
+
+        // 3. Mostramos el texto en la pantalla
+        txtRol.setText(rolGuardado);
+
+        return view;
     }
 }

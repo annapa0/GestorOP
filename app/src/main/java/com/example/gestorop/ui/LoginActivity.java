@@ -49,10 +49,14 @@ public class LoginActivity extends AppCompatActivity {
         if (email.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Por favor ingrese correo y contraseña", Toast.LENGTH_SHORT).show();
             return;
+
         }
 
         loginFirebase(email, password);
+
     }
+
+
 
     private void loginFirebase(String email, String password) {
         // Mostramos un Toast para que el usuario sepa que está cargando
@@ -93,13 +97,19 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void irAlMenuPrincipal(String rol) {
-        // Guardamos el rol para usarlo después (ej. para ocultar botones)
-        // Por ahora lo pasamos directo al Main
+        // 1. Guardamos el rol en la memoria del teléfono (Sesión)
+        com.example.gestorop.model.Sesion.guardarRol(this, rol);
+
+        // 2. Configuramos el salto al MainActivity
         Intent intent = new Intent(this, MainActivity.class);
+
+        // (Opcional) Puedes seguir mandándolo por putExtra si quieres, pero ya está en Sesion
         intent.putExtra("ROL_USUARIO", rol);
 
-        // Estas flags evitan que el usuario pueda volver al Login con el botón "Atrás"
+        // 3. Borramos el historial para que no puedan volver al Login con "Atrás"
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        // 4. Iniciamos
         startActivity(intent);
     }
 }

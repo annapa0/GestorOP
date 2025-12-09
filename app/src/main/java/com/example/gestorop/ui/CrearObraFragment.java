@@ -13,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -33,10 +35,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -46,8 +50,9 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
 
     // Vistas
     private TextInputEditText etNombre, etUbicacion, etFechaInicio, etFechaFin;
+    private AutoCompleteTextView spinnerSupervisor;
     private Button btnGuardar;
-    private ImageButton btnBuscar; // Botón Lupa
+    private ImageButton btnBuscar;
     private ProgressBar progressBar;
 
     // Mapa
@@ -55,12 +60,19 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap gMap;
     private com.google.android.gms.location.FusedLocationProviderClient fusedLocationClient;
 
-    // Firebase y Datos
+    // Firebase
     private FirebaseFirestore db;
+
+    // Datos y Variables
     private final Calendar calendar = Calendar.getInstance();
     private String latitudActual = "0.0";
     private String longitudActual = "0.0";
     private static final int PERMISSION_REQUEST_CODE = 100;
+
+    // Variables para Supervisores
+    private ArrayList<String> listaNombresSupervisores; // Se muestra en el Spinner (emails)
+    private ArrayList<String> listaIdsSupervisores;     // Se usa para guardar (IDs)
+    private String idSupervisorSeleccionado = "";
 
     public CrearObraFragment() { }
 
@@ -76,12 +88,17 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
         etUbicacion = view.findViewById(R.id.etUbicacionObra);
         etFechaInicio = view.findViewById(R.id.etFechaInicio);
         etFechaFin = view.findViewById(R.id.etFechaFin);
+        spinnerSupervisor = view.findViewById(R.id.spinnerSupervisor);
         btnGuardar = view.findViewById(R.id.btnGuardarObra);
-        btnBuscar = view.findViewById(R.id.btnBuscarEnMapa); // La Lupa
+        btnBuscar = view.findViewById(R.id.btnBuscarEnMapa);
         progressBar = view.findViewById(R.id.progressBar);
         mapView = view.findViewById(R.id.mapView);
 
-        // Inicializar Mapa y Cliente de Ubicación
+        // Inicializar listas
+        listaNombresSupervisores = new ArrayList<>();
+        listaIdsSupervisores = new ArrayList<>();
+
+        // Inicializar Mapa
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
         fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(requireActivity());
@@ -90,25 +107,68 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
         etFechaInicio.setOnClickListener(v -> mostrarCalendario(etFechaInicio));
         etFechaFin.setOnClickListener(v -> mostrarCalendario(etFechaFin));
         btnGuardar.setOnClickListener(v -> validarYGuardarObra());
-
-        // Listener para buscar dirección escrita
         btnBuscar.setOnClickListener(v -> buscarDireccionEscrita());
+
+        // Cargar datos al iniciar
+        cargarSupervisores();
 
         return view;
     }
 
-    // ==========================================
-    // LÓGICA DEL MAPA
-    // ==========================================
+    // =======================================================
+    // 1. CARGA DE SUPERVISORES (FIREBASE -> SPINNER)
+    // =======================================================
+    private void cargarSupervisores() {
+        // Busca usuarios donde el campo 'role' sea igual a 'Supervisor'
+        db.collection("users")
+                .whereEqualTo("rol", "SUPERVISOR")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    listaNombresSupervisores.clear();
+                    listaIdsSupervisores.clear();
 
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String email = document.getString("email");
+                        String id = document.getId();
+
+                        // Si quieres mostrar el nombre en lugar del email, cambia "email" por "nombre"
+                        if (email != null) {
+                            listaNombresSupervisores.add(email);
+                            listaIdsSupervisores.add(id);
+                        }
+                    }
+
+                    // Llenar el adaptador
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                            requireContext(),
+                            android.R.layout.simple_dropdown_item_1line,
+                            listaNombresSupervisores
+                    );
+                    spinnerSupervisor.setAdapter(adapter);
+
+                    // Listener al seleccionar un item
+                    spinnerSupervisor.setOnItemClickListener((parent, view, position, id) -> {
+                        idSupervisorSeleccionado = listaIdsSupervisores.get(position);
+                    });
+
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Error cargando supervisores", Toast.LENGTH_SHORT).show();
+                    Log.e("Firebase", "Error supervisores", e);
+                });
+    }
+
+
+    // =======================================================
+    // 2. LÓGICA DEL MAPA
+    // =======================================================
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         gMap = googleMap;
         verificarPermisoYCentrar();
-        habilitarMovimientoDePin(); // Activar click en mapa -> Texto
+        habilitarClickEnMapa();
     }
 
-    // 1. Centrar mapa en GPS al iniciar
     private void verificarPermisoYCentrar() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -118,38 +178,32 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
                     if (location != null) {
                         LatLng miUbicacion = new LatLng(location.getLatitude(), location.getLongitude());
                         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(miUbicacion, 15f));
-
-                        // Solo si el campo está vacío, llenamos con la ubicación actual
+                        // Solo llenamos datos si el campo de texto está vacío
                         if (etUbicacion.getText().toString().isEmpty()) {
-                            actualizarMarcadorYTexto(miUbicacion, false); // false = no mover cámara otra vez
+                            actualizarMarcadorYTexto(miUbicacion, false);
                         }
                     }
                 });
-            } catch (SecurityException e) { Log.e("Mapa", "Error seguridad", e); }
+            } catch (SecurityException e) { Log.e("Mapa", "Error GPS", e); }
         } else {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_CODE);
         }
     }
 
-    // 2. Click en Mapa -> Obtener Dirección (Reverse Geocoding)
-    private void habilitarMovimientoDePin() {
+    // A. Click en Mapa -> Texto
+    private void habilitarClickEnMapa() {
         if (gMap == null) return;
-        gMap.setOnMapClickListener(latLng -> {
-            actualizarMarcadorYTexto(latLng, true);
-        });
+        gMap.setOnMapClickListener(latLng -> actualizarMarcadorYTexto(latLng, true));
     }
 
     private void actualizarMarcadorYTexto(LatLng latLng, boolean moverCamara) {
         gMap.clear();
         gMap.addMarker(new MarkerOptions().position(latLng).title("Seleccionado"));
-        if (moverCamara) {
-            gMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-        }
+        if (moverCamara) gMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
 
         latitudActual = String.valueOf(latLng.latitude);
         longitudActual = String.valueOf(latLng.longitude);
 
-        // Hilo secundario para traducir coordenadas a texto
         new Thread(() -> {
             try {
                 Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
@@ -162,13 +216,10 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
         }).start();
     }
 
-    // 3. Escribir Texto + Botón Lupa -> Mover Mapa (Geocoding)
+    // B. Texto -> Mapa (Lupa)
     private void buscarDireccionEscrita() {
         String direccion = etUbicacion.getText().toString().trim();
-        if (TextUtils.isEmpty(direccion)) {
-            etUbicacion.setError("Escribe una dirección");
-            return;
-        }
+        if (TextUtils.isEmpty(direccion)) { etUbicacion.setError("Escribe algo"); return; }
 
         // Ocultar teclado
         InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -180,13 +231,11 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
             try {
                 Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
                 List<Address> addresses = geocoder.getFromLocationName(direccion, 1);
-
                 requireActivity().runOnUiThread(() -> {
                     if (addresses != null && !addresses.isEmpty()) {
                         Address address = addresses.get(0);
                         LatLng pos = new LatLng(address.getLatitude(), address.getLongitude());
 
-                        // Actualizar mapa y variables
                         latitudActual = String.valueOf(pos.latitude);
                         longitudActual = String.valueOf(pos.longitude);
 
@@ -195,32 +244,42 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
                         gMap.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 15f));
                         Toast.makeText(getContext(), "Ubicación encontrada", Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(getContext(), "No se encontró la dirección", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Dirección no encontrada", Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (IOException e) {
-                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show());
+                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Error de red", Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
 
-    // ==========================================
-    // LÓGICA DE GUARDADO (FIREBASE)
-    // ==========================================
 
+    // =======================================================
+    // 3. GUARDADO EN FIREBASE
+    // =======================================================
     private void validarYGuardarObra() {
         String nombre = etNombre.getText().toString().trim();
         String ubicacion = etUbicacion.getText().toString().trim();
         String fechaInicioStr = etFechaInicio.getText().toString().trim();
         String fechaFinStr = etFechaFin.getText().toString().trim();
 
+        // Validaciones
         if (TextUtils.isEmpty(nombre)) { etNombre.setError("Requerido"); return; }
         if (TextUtils.isEmpty(ubicacion)) { etUbicacion.setError("Requerido"); return; }
         if (TextUtils.isEmpty(fechaInicioStr)) { Toast.makeText(getContext(), "Falta fecha inicio", Toast.LENGTH_SHORT).show(); return; }
+        if (TextUtils.isEmpty(idSupervisorSeleccionado)) {
+            spinnerSupervisor.setError("Selecciona un supervisor");
+            spinnerSupervisor.requestFocus(); // Abre el menú si falta
+            spinnerSupervisor.showDropDown();
+            return;
+        } else {
+            spinnerSupervisor.setError(null);
+        }
 
         progressBar.setVisibility(View.VISIBLE);
         btnGuardar.setEnabled(false);
 
+        // Parseo de fechas
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         Date dateInicio = null, dateFin = null;
         try {
@@ -228,7 +287,7 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
             if (!fechaFinStr.isEmpty()) dateFin = sdf.parse(fechaFinStr);
         } catch (ParseException e) { e.printStackTrace(); }
 
-        // Creamos el objeto con la ubicación del texto final y las coordenadas (si se usó el mapa)
+        // Crear Objeto
         Obra nuevaObra = new Obra(
                 null,
                 nombre,
@@ -236,11 +295,12 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
                 latitudActual,
                 longitudActual,
                 ubicacion,
-                "",
+                idSupervisorSeleccionado, // Guardamos el ID del supervisor
                 dateInicio,
                 dateFin
         );
 
+        // Guardar
         db.collection("obras").add(nuevaObra)
                 .addOnSuccessListener(documentReference -> {
                     documentReference.update("id", documentReference.getId());
@@ -255,10 +315,10 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
                 });
     }
 
-    // ==========================================
-    // UTILIDADES Y CICLO DE VIDA
-    // ==========================================
 
+    // =======================================================
+    // 4. UTILIDADES Y CICLO DE VIDA
+    // =======================================================
     private void mostrarCalendario(TextInputEditText editText) {
         DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
             calendar.set(year, month, dayOfMonth);
@@ -272,10 +332,15 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
         etUbicacion.setText("");
         etFechaInicio.setText("");
         etFechaFin.setText("");
+        spinnerSupervisor.setText("");
+        idSupervisorSeleccionado = "";
         latitudActual = "0.0";
         longitudActual = "0.0";
-        if(gMap != null) gMap.clear();
-        verificarPermisoYCentrar(); // Resetear mapa al GPS actual
+
+        if(gMap != null) {
+            gMap.clear();
+            verificarPermisoYCentrar();
+        }
         btnGuardar.setEnabled(true);
     }
 
@@ -288,12 +353,8 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    @Override
-    public void onResume() { super.onResume(); mapView.onResume(); }
-    @Override
-    public void onPause() { super.onPause(); mapView.onPause(); }
-    @Override
-    public void onDestroy() { super.onDestroy(); mapView.onDestroy(); }
-    @Override
-    public void onLowMemory() { super.onLowMemory(); mapView.onLowMemory(); }
+    @Override public void onResume() { super.onResume(); mapView.onResume(); }
+    @Override public void onPause() { super.onPause(); mapView.onPause(); }
+    @Override public void onDestroy() { super.onDestroy(); mapView.onDestroy(); }
+    @Override public void onLowMemory() { super.onLowMemory(); mapView.onLowMemory(); }
 }
