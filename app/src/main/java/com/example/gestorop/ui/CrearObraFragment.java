@@ -287,19 +287,23 @@ public class CrearObraFragment extends Fragment implements OnMapReadyCallback {
             if (!fechaFinStr.isEmpty()) dateFin = sdf.parse(fechaFinStr);
         } catch (ParseException e) { e.printStackTrace(); }
 
-        // Crear Objeto
+        // ... (código anterior de validaciones) ...
+
+        // Crear Objeto Obra CORREGIDO
         Obra nuevaObra = new Obra(
-                null,
-                nombre,
-                "Iniciando",
-                latitudActual,
-                longitudActual,
-                ubicacion,
-                idSupervisorSeleccionado, // Guardamos el ID del supervisor
-                dateInicio,
-                dateFin
+                null,                      // 1. ID (null porque Firebase lo genera)
+                nombre,                    // 2. Nombre
+                "Iniciando",               // 3. Estatus
+                latitudActual,             // 4. Latitud
+                longitudActual,            // 5. Longitud
+                ubicacion,                 // 6. Ubicación
+                idSupervisorSeleccionado,  // 7. Supervisor ID
+                "",                        // 8. Residente ID (NUEVO: Se manda vacío al crear) <--- AQUÍ FALTABA
+                dateInicio,                // 9. Fecha Inicio
+                dateFin                    // 10. Fecha Fin
         );
 
+        // ... (resto del código para guardar en db) ...
         // Guardar
         db.collection("obras").add(nuevaObra)
                 .addOnSuccessListener(documentReference -> {

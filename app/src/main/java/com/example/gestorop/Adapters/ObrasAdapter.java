@@ -4,24 +4,29 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.myapplication.R;
 import com.example.gestorop.model.Obra;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.List;
 
 public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHolder> {
 
     private List<Obra> listaObras;
-    private FirebaseFirestore db; // Instancia de Firebase para buscar nombres
+    private FirebaseFirestore db;
+    private OnItemClickListener listener; // <--- 1. Interfaz para el clic
 
-    public ObrasAdapter(List<Obra> listaObras) {
+    // 2. Definimos la interfaz
+    public interface OnItemClickListener {
+        void onItemClick(Obra obra);
+    }
+
+    // 3. Actualizamos el constructor para recibir el listener
+    public ObrasAdapter(List<Obra> listaObras, OnItemClickListener listener) {
         this.listaObras = listaObras;
-        this.db = FirebaseFirestore.getInstance(); // Inicializamos DB
+        this.listener = listener;
+        this.db = FirebaseFirestore.getInstance();
     }
 
     @NonNull
@@ -35,52 +40,40 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
     public void onBindViewHolder(@NonNull ObraViewHolder holder, int position) {
         Obra obra = listaObras.get(position);
 
-        // Datos básicos
         holder.txtNombre.setText(obra.getNombre());
         holder.txtUbicacion.setText("📍 " + obra.getUbicacion());
         holder.txtEstatus.setText(obra.getEstatus());
 
-        // --- LÓGICA PARA BUSCAR EL SUPERVISOR ---
+        // Lógica de Supervisor (copiada del paso anterior)
         String supervisorId = obra.getSupervisorId();
-
         if (supervisorId != null && !supervisorId.isEmpty()) {
             holder.txtSupervisor.setVisibility(View.VISIBLE);
-            holder.txtSupervisor.setText("Supervisor: Buscando...");
-
-            // Consultamos la colección "users" para obtener el email
+            holder.txtSupervisor.setText("Cargando supervisor...");
             db.collection("users").document(supervisorId).get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            // Puedes usar "email" o "nombre" según lo que tengas en users
-                            String email = documentSnapshot.getString("email");
-                            holder.txtSupervisor.setText("Supervisor: " + (email != null ? email : "Sin nombre"));
-                        } else {
-                            holder.txtSupervisor.setText("Supervisor: Usuario no encontrado");
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        holder.txtSupervisor.setText("Supervisor: Error al cargar");
+                    .addOnSuccessListener(doc -> {
+                        if (doc.exists()) holder.txtSupervisor.setText("Sup: " + doc.getString("email"));
                     });
         } else {
-            // Si no tiene ID asignado (casos antiguos o errores)
             holder.txtSupervisor.setVisibility(View.GONE);
         }
+
+        // 4. DETECTAR EL CLIC EN LA TARJETA
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(obra);
+        });
     }
 
     @Override
-    public int getItemCount() {
-        return listaObras.size();
-    }
+    public int getItemCount() { return listaObras.size(); }
 
     static class ObraViewHolder extends RecyclerView.ViewHolder {
         TextView txtNombre, txtUbicacion, txtEstatus, txtSupervisor;
-
         public ObraViewHolder(@NonNull View itemView) {
             super(itemView);
             txtNombre = itemView.findViewById(R.id.txtNombreObra);
             txtUbicacion = itemView.findViewById(R.id.txtUbicacion);
             txtEstatus = itemView.findViewById(R.id.txtEstatus);
-            txtSupervisor = itemView.findViewById(R.id.txtSupervisor); // Vinculamos el nuevo texto
+            txtSupervisor = itemView.findViewById(R.id.txtSupervisor);
         }
     }
 }

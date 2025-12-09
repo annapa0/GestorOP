@@ -12,13 +12,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.gestorop.Adapters.ObrasAdapter;
 import com.example.myapplication.R;
+import com.example.gestorop.model.Obra;
 import com.example.gestorop.model.Sesion;
-import com.example.gestorop.model.Obra; // Importando la clase que acabas de arreglar
-
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -28,8 +29,8 @@ import java.util.List;
 public class MisObrasFragment extends Fragment {
 
     private RecyclerView recyclerView;
-    private com.example.gestorop.Adapters.ObrasAdapter adapter;
-    private List<Obra> listaObras;
+    private ObrasAdapter adapter;
+    private List<Obra> listaObras; // Esta es la variable que estaba null
     private ProgressBar progressBar;
     private TextView txtVacio;
 
@@ -51,8 +52,28 @@ public class MisObrasFragment extends Fragment {
 
         // 2. Configurar RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // --- CORRECCIÓN: INICIALIZAR LA LISTA AQUÍ ---
         listaObras = new ArrayList<>();
-        adapter = new com.example.gestorop.Adapters.ObrasAdapter(listaObras);
+        // ---------------------------------------------
+
+        // Configurar el Adaptador con el evento de Clic para ir al Detalle
+        adapter = new ObrasAdapter(listaObras, obra -> {
+            // Al hacer clic, enviamos los datos al fragmento de detalle
+            Bundle bundle = new Bundle();
+            bundle.putString("OBRA_ID", obra.getId());
+            bundle.putString("OBRA_NOMBRE", obra.getNombre());
+            bundle.putString("OBRA_UBICACION", obra.getUbicacion());
+
+            // Navegar al detalle (Asegúrate de tener la acción o el fragmento en navigation.xml)
+            try {
+                Navigation.findNavController(requireView())
+                        .navigate(R.id.detalleObraFragment, bundle);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Error de navegación: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
         recyclerView.setAdapter(adapter);
 
         // 3. Cargar datos
@@ -65,54 +86,56 @@ public class MisObrasFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
         txtVacio.setVisibility(View.GONE);
 
-        // A. Obtener datos de la Sesión
+        // Seguridad extra: si por alguna razón la lista es null, la creamos
+        if (listaObras == null) {
+            listaObras = new ArrayList<>();
+        }
+
         String miIdUsuario = Sesion.obtenerId(requireContext());
         String miRol = Sesion.obtenerRol(requireContext());
 
-        Log.d("MisObras", "Consultando obras para ID: " + miIdUsuario + " | Rol: " + miRol);
+        Log.d("MisObras", "ID: " + miIdUsuario + " | Rol: " + miRol);
 
-        // B. Definir la consulta según el Rol
         com.google.firebase.firestore.Query query;
 
         if (miRol.equalsIgnoreCase("Admin")) {
-            // El Admin ve TODO
             query = db.collection("obras");
         } else {
-            // Supervisor o Residente ven SOLO lo suyo
+            // Supervisor ve solo sus obras
             query = db.collection("obras").whereEqualTo("supervisorId", miIdUsuario);
         }
 
-        // C. Ejecutar la consulta
         query.get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     progressBar.setVisibility(View.GONE);
+
+                    // AQUÍ OCURRÍA EL ERROR ANTES
                     listaObras.clear();
 
                     if (!queryDocumentSnapshots.isEmpty()) {
                         for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                             try {
+                                // Mapeo manual seguro
                                 Obra obra = new Obra();
                                 obra.setId(document.getId());
                                 obra.setNombre(document.getString("nombre"));
                                 obra.setUbicacion(document.getString("ubicacion"));
                                 obra.setEstatus(document.getString("estatus"));
                                 obra.setSupervisorId(document.getString("supervisorId"));
+                                obra.setResidenteId(document.getString("residenteId")); // Nuevo campo
 
-                                // Fechas
                                 obra.setFechaInicio(document.getDate("fechaInicio"));
                                 obra.setFechaFin(document.getDate("fechaFin"));
 
-                                // Coordenadas seguras
                                 Object lat = document.get("latitud");
                                 Object lon = document.get("longitud");
-
                                 obra.setLatitud(lat != null ? String.valueOf(lat) : "0.0");
                                 obra.setLongitud(lon != null ? String.valueOf(lon) : "0.0");
 
                                 listaObras.add(obra);
 
                             } catch (Exception e) {
-                                Log.e("MisObras", "Error al leer una obra: " + e.getMessage());
+                                Log.e("MisObras", "Error mapeo: " + e.getMessage());
                             }
                         }
                         adapter.notifyDataSetChanged();
@@ -122,8 +145,7 @@ public class MisObrasFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Error al cargar datos", Toast.LENGTH_SHORT).show();
-                    Log.e("MisObras", "Error Firestore", e);
+                    Toast.makeText(getContext(), "Error al cargar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 }

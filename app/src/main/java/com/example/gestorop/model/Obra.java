@@ -10,6 +10,16 @@ public class Obra {
     private String longitud;
     private String ubicacion;
     private String supervisorId;
+    private String residenteId;
+
+    public String getResidenteId() {
+        return residenteId;
+    }
+
+    public void setResidenteId(String residenteId) {
+        this.residenteId = residenteId;
+    }
+
     private Date fechaInicio;
     private Date fechaFin;
 
@@ -18,7 +28,9 @@ public class Obra {
     }
 
     // 2. CONSTRUCTOR COMPLETO
-    public Obra(String id, String nombre, String estatus, String latitud, String longitud, String ubicacion, String supervisorId, Date fechaInicio, Date fechaFin) {
+
+
+    public Obra(String id, String nombre, String estatus, String latitud, String longitud, String ubicacion, String supervisorId, String residenteId, Date fechaInicio, Date fechaFin) {
         this.id = id;
         this.nombre = nombre;
         this.estatus = estatus;
@@ -26,6 +38,7 @@ public class Obra {
         this.longitud = longitud;
         this.ubicacion = ubicacion;
         this.supervisorId = supervisorId;
+        this.residenteId = residenteId;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
     }
