@@ -28,9 +28,9 @@ public class OpcionesFragment extends Fragment {
         Button btnCrearUsuario = view.findViewById(R.id.btnCrearUsuario);
         Button btnCreaObra = view.findViewById(R.id.btnCreaObra);
         Button btnCerrar = view.findViewById(R.id.btnCerrarSesion);
-
+        Button btnMisObras = view.findViewById(R.id.btnMisObras);
         // 2. OBTENER EL ROL DE LA SESIÓN
-        String rolActual = com.example.gestorop.model.Sesion.obtenerRol(requireContext());
+        String rolActual = Sesion.obtenerRol(requireContext());
 
         // 3. APLICAR LÓGICA DE VISIBILIDAD SEGÚN EL ROL
 
@@ -65,10 +65,15 @@ public class OpcionesFragment extends Fragment {
                         .navigate(R.id.crearObraFragment)
         );
 
+        btnMisObras.setOnClickListener(v ->
+                Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                        .navigate(R.id.misObrasFragment)
+        );
+
         // 5. Lógica de Cerrar Sesión
         btnCerrar.setOnClickListener(v -> {
             // Borramos los datos de la sesión
-            com.example.gestorop.model.Sesion.cerrarSesion(requireContext());
+            Sesion.cerrarSesion(requireContext());
 
             // Redirigimos al Login y borramos el historial para que no puedan volver atrás
             Intent intent = new Intent(requireContext(), LoginActivity.class);

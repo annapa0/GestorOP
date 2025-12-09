@@ -22,6 +22,11 @@
         android:name="com.example.gestorop.ui.CrearObraFragment"
         android:label="Crear Obra"
         tools:layout="@layout/fragment_crear_obra" />
+    <fragment
+        android:id="@+id/misObrasFragment"
+        android:name="com.example.gestorop.ui.MisObrasFragment"
+        android:label="Mis Obras Asignadas"
+        tools:layout="@layout/fragment_mis_obras" />
 
 
 </navigation>
